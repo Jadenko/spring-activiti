@@ -16,6 +16,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.JpaVendorAdapter;
@@ -29,8 +30,11 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @PropertySource(value = "classpath:db-config/database-config.properties", ignoreResourceNotFound = false)
 @ComponentScan("lu.jadbouchouka.learnings")
 @EnableWebMvc
+@EnableJpaRepositories("lu.jadbouchouka.learnings.dao")
 public class SpringConf {
 
+	Database database = Database.ORACLE;
+	
 	/**
 	 * To resolve ${}
 	 *
@@ -44,20 +48,29 @@ public class SpringConf {
 	@Bean
 	public DataSource dataSource() {
 		DriverManagerDataSource dataSource = new DriverManagerDataSource();
-		dataSource.setDriverClassName("com.mysql.jdbc.Driver");
-		dataSource.setUrl("jdbc:mysql://localhost:3306/activiti");
-		dataSource.setUsername("root");
-		dataSource.setPassword("root");
+		
+		if(Database.MYSQL.equals(database)){
+			dataSource.setDriverClassName("com.mysql.jdbc.Driver");
+			dataSource.setUrl("jdbc:mysql://localhost:3306/activiti");
+			dataSource.setUsername("root");
+			dataSource.setPassword("root");	
+		}
+
+		if(Database.ORACLE.equals(database)){
+			dataSource.setDriverClassName("oracle.jdbc.driver.OracleDriver");
+			dataSource.setUrl("jdbc:oracle:thin:@localhost:1521:XE");
+			dataSource.setUsername("jad");
+			dataSource.setPassword("jad");
+		}
 
 		return dataSource;
 	}
 
 	@Bean
-	public LocalContainerEntityManagerFactoryBean entityManagerFactoryBean(DataSource dataSource) {
+	public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
 		try {
 			LocalContainerEntityManagerFactoryBean factoryBean = new LocalContainerEntityManagerFactoryBean();
-			factoryBean.setPackagesToScan("lu.jadbouchouka");
-
+			factoryBean.setPackagesToScan("lu.jadbouchouka.learnings.model");
 			factoryBean.setJpaProperties(additionalProperties());
 			factoryBean.setPersistenceUnitName("activiti");
 			factoryBean.setDataSource(dataSource);
@@ -65,7 +78,7 @@ public class SpringConf {
 			JpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter() {
 
 				{
-					setDatabase(Database.MYSQL);
+					setDatabase(database);
 				}
 			};
 			factoryBean.setJpaVendorAdapter(vendorAdapter);
@@ -83,31 +96,23 @@ public class SpringConf {
 			private static final long serialVersionUID = 1L;
 
 			{ // Hibernate Specific:
-				setProperty("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
+				if(Database.MYSQL.equals(database)){
+					setProperty("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
+				}
+				
+				if(Database.ORACLE.equals(database)){
+					setProperty("hibernate.dialect", "org.hibernate.dialect.Oracle10gDialect");	
+				}
 				setProperty("hibernate.show_sql", "true");
+				setProperty("hibernate.hbm2ddl.auto", "update");
 			}
 		};
 	}
 
-	// @Bean
-	// public SessionFactory sessionFactory(DataSource dataSource) throws
-	// Exception{
-	// AnnotationSessionFactoryBean factoryBean = new
-	// AnnotationSessionFactoryBean();
-	// factoryBean.setDataSource(dataSource);
-	// Properties properties = new Properties();
-	// properties.setProperty("hibernate.dialect",
-	// "org.hibernate.dialect.MySQLDialect");
-	// properties.setProperty("hibernate.show_sql", "true");
-	// factoryBean.setHibernateProperties(properties);
-	// factoryBean.afterPropertiesSet();
-	// return factoryBean.getObject();
-	// }
-
 	@Bean
-	public PlatformTransactionManager transactionManager(LocalContainerEntityManagerFactoryBean entityManagerFactoryBean) {
+	public PlatformTransactionManager transactionManager(LocalContainerEntityManagerFactoryBean entityManagerFactory) {
 		JpaTransactionManager transactionManager = new JpaTransactionManager();
-		transactionManager.setEntityManagerFactory(entityManagerFactoryBean.getObject());
+		transactionManager.setEntityManagerFactory(entityManagerFactory.getObject());
 
 		return transactionManager;
 	}

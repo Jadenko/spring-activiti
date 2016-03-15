@@ -27,7 +27,7 @@
     </subProcess>
     <sequenceFlow id="flow6" sourceRef="subprocess2" targetRef="endevent1"></sequenceFlow>
     <boundaryEvent id="boundaryerror1" name="Error" attachedToRef="subprocess2">
-      <errorEventDefinition errorRef="ERROR_SEND_MAIL_FAIL"></errorEventDefinition>
+      <errorEventDefinition errorRef="ERROR_FILE"></errorEventDefinition>
     </boundaryEvent>
     <serviceTask id="servicetask4" name="Envoi Mail Failed" activiti:expression="${validationServices.sendMailFailed()}"></serviceTask>
     <exclusiveGateway id="exclusivegateway2" name="Exclusive Gateway"></exclusiveGateway>
