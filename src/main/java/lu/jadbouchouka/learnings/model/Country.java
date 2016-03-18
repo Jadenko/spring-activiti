@@ -1,11 +1,15 @@
 package lu.jadbouchouka.learnings.model;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Transient;
 
 @Entity
 public class Country {
@@ -21,6 +25,9 @@ public class Country {
 	@Column(length=20)
 	private String capital;
 
+	@Transient
+	private Set<Person> visitors = new HashSet<>();
+	
 	public int getId() {
 		return id;
 	}
@@ -44,6 +51,13 @@ public class Country {
 	public void setCapital(String capital) {
 		this.capital = capital;
 	}
-	
+
+	public Set<Person> getVisitors() {
+		return visitors;
+	}
+
+	public void setVisitors(Set<Person> visitors) {
+		this.visitors = visitors;
+	}
 	
 }
